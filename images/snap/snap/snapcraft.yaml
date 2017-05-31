@@ -1,0 +1,26 @@
+name: blockstack-core
+version: 'rc-0.14.2'
+summary: Blockstack Core
+description: |
+  Core implementation of Blockstack
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  blockstack-core:
+    source: https://github.com/kantai/blockstack-core.git
+    source-branch: rc-0.14.2-aaron
+    plugin: python
+    python-version: python2
+    python-packages:
+      - git+https://github.com/blockstack/virtualchain.git@rc-0.14.2#egg=virtualchain
+      - git+https://github.com/kantai/jsontokens-py.git#egg=jsontokens
+    build-packages: [build-essential, libssl-dev, libffi-dev]
+    stage-packages: [libssl1.0.0, libffi6, rng-tools, curl]
+apps:
+  blockstack:
+    command: blockstack
+    plugs: [network]
+  blockstack-core:
+    command: blockstack-core
+    plugs: [network]
