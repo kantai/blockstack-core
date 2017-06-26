@@ -21,29 +21,25 @@
     along with Blockstack. If not, see <http://www.gnu.org/licenses/>.
 """ 
 
-# useful for simulating the blockchain for Portal
-# the user "foo.id" will be registered
-
 import testlib
 import pybitcoin
+import time
+import json
+import sys
+import os
+import blockstack_client
 
 wallets = [
     testlib.Wallet( "5JesPiN68qt44Hc2nT8qmyZ1JDwHebfoh9KQ52Lazb1m1LaKNj9", 100000000000 ),
     testlib.Wallet( "5KHqsiU9qa77frZb6hQy9ocV7Sus9RWJcQGYYBJJBb2Efj1o77e", 100000000000 ),
     testlib.Wallet( "5Kg5kJbQHvk1B64rJniEmgbD83FpZpbw2RjdAZEzTefs9ihN3Bz", 100000000000 ),
-    testlib.Wallet( "5JuVsoS9NauksSkqEjbUZxWwgGDQbMwPsEfoRBSpLpgDX1RtLX7", 100000000000 ),
-    testlib.Wallet( "5KEpiSRr1BrT8vRD7LKGCEmudokTh1iMHbiThMQpLdwBwhDJB1T", 100000000000 )
+    testlib.Wallet( "5JuVsoS9NauksSkqEjbUZxWwgGDQbMwPsEfoRBSpLpgDX1RtLX7", 5500 ),
+    testlib.Wallet( "5KEpiSRr1BrT8vRD7LKGCEmudokTh1iMHbiThMQpLdwBwhDJB1T", 5500 )
 ]
 
 consensus = "17ac43c1d8549c3181b200f1bf97eb7d"
 
 def scenario( wallets, **kw ):
-
-    # save the wallet 
-    wallet = testlib.blockstack_client_initialize_wallet( "0123456789abcdef", wallets[2].privkey, wallets[3].privkey, wallets[4].privkey, start_rpc=False )
-    if 'error' in wallet:
-        print 'failed to set wallet: {}'.format(wallet)
-        return False
 
     testlib.blockstack_namespace_preorder( "id", wallets[1].addr, wallets[0].privkey )
     testlib.next_block( **kw )
@@ -53,32 +49,12 @@ def scenario( wallets, **kw ):
 
     testlib.blockstack_namespace_ready( "id", wallets[1].privkey )
     testlib.next_block( **kw )
-
-    testlib.blockstack_name_preorder( "foo.id", wallets[2].privkey, wallets[3].addr )
-    testlib.next_block( **kw )
-
-    testlib.blockstack_name_register( "foo.id", wallets[2].privkey, wallets[3].addr )
-    testlib.next_block( **kw )
-
-    # start api server 
-    res = testlib.start_api("0123456789abcdef")
-    if 'error' in res:
-        print 'failed to start API server: {}'.format(res)
-        return False
-
-    # set up node environment 
-    nodedir = testlib.nodejs_setup()
-
-    # run 'core-test' test on blockstack (tests authentication from blockstack.js to Core API)
-    testlib.nodejs_copy_package(nodedir, "blockstack")
-    testlib.nodejs_link_package(nodedir, "blockstack")
-    testlib.nodejs_copy_package(nodedir, "blockstack-storage")
-    testlib.nodejs_link_package(nodedir, "blockstack-storage")
-    testlib.nodejs_run_test(nodedir, "integration-test-storage")
-    testlib.nodejs_cleanup(nodedir)
-
-
     
+    wallet = testlib.blockstack_client_initialize_wallet( "0123456789abcdef", wallets[2].privkey, wallets[3].privkey, wallets[4].privkey )
+
+    print >> sys.stderr, "We're a go!"
+
+
 def check( state_engine ):
 
     # not revealed, but ready 
@@ -95,22 +71,5 @@ def check( state_engine ):
     if ns['namespace_id'] != 'id':
         print "wrong namespace"
         return False 
-
-    # not preordered
-    preorder = state_engine.get_name_preorder( "foo.id", pybitcoin.make_pay_to_address_script(wallets[2].addr), wallets[3].addr )
-    if preorder is not None:
-        print "preorder exists"
-        return False
     
-    # registered 
-    name_rec = state_engine.get_name( "foo.id" )
-    if name_rec is None:
-        print "name does not exist"
-        return False 
-
-    # owned by
-    if name_rec['address'] != wallets[3].addr or name_rec['sender'] != pybitcoin.make_pay_to_address_script(wallets[3].addr):
-        print "sender is wrong"
-        return False 
-
     return True
