@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# if there was ever evidence that I shouldn't be maintaining a dpkg, the
+#  existence of this script is it.
+
+ln -s /usr/share/python/blockstack-core/bin/blockstack /usr/local/bin/blockstack

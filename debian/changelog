@@ -1,4 +1,4 @@
-python-blockstack-core (0.14.2) unstable; urgency=medium
+blockstack-core (0.14.2) unstable; urgency=medium
 
   * Initial release.
 
