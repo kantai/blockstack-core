@@ -112,6 +112,7 @@ rpc_password = blockstacksystem
 server = localhost
 port = 18332
 use_https = False
+import_addresses = True
 
 [blockchain-writer]
 utxo_provider = bitcoind_utxo
@@ -120,6 +121,7 @@ rpc_password = blockstacksystem
 server = localhost
 port = 18332
 use_https = False
+import_addresses = True
 
 [bitcoind]
 passwd = blockstacksystem
@@ -593,6 +595,7 @@ def run_scenario( scenario, config_file, client_config_file, interactive=False, 
     # pass along extra arguments
     utxo_opts['blockchain_server'] = 'localhost'
     utxo_opts['blockchain_port'] = 18332
+    utxo_opts['import_addresses'] = 'True'
     utxo_opts['spv_headers_path'] = spv_headers_path
 
     print ""
@@ -1062,6 +1065,8 @@ class BitcoinRegtestUTXOProvider(object):
 
         SATOSHIS_PER_COIN = 10**8
         unspents_tmp = blockchain_client.listunspent( 0, 200000, [address] )
+        log.debug("get_unspents({}) = {}".format( address, len(unspents_tmp) ))
+
         unspents_all = [{
             "transaction_hash": s["txid"],
             'outpoint': {

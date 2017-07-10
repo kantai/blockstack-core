@@ -211,6 +211,7 @@ def default_bitcoind_utxo_opts( config_file=None ):
    rpc_password = None
    use_https = None
    version_byte = None
+   import_addresses = None
    
    provider_secs = find_service_provider_sections(config_file, 'bitcoind_utxo')
    if len(provider_secs) > 0:
@@ -235,6 +236,13 @@ def default_bitcoind_utxo_opts( config_file=None ):
             else:
                 use_https = False
 
+       if parser.has_option(provider_sec, "import_addresses"):
+
+            if parser.get(provider_sec, "import_addresses").lower() in ["y", "yes", "true"]:
+                import_addresses = True
+            else:
+                import_addresses = False
+
        if parser.has_option(provider_sec, "version_byte"):
            version_byte = int(parser.get(provider_sec, "version_byte"))
 
@@ -251,12 +259,16 @@ def default_bitcoind_utxo_opts( config_file=None ):
    if port is None:
        port = 8332
 
+   if import_addresses is None:
+       import_addresses = False
+
    bitcoind_utxo_opts = {
        "rpc_username": rpc_username,
        "rpc_password": rpc_password,
        "server": server,
        "port": port,
        "use_https": use_https,
+       "import_addresses" : import_addresses,
        "version_byte": version_byte
    }
 
@@ -398,7 +410,8 @@ def connect_utxo_provider( utxo_opts, min_confirmations=TX_MIN_CONFIRMATIONS ):
    elif utxo_provider == "bitcoind_utxo":
        return BitcoindClient( utxo_opts['rpc_username'], utxo_opts['rpc_password'], use_https=utxo_opts['use_https'],
                               server=utxo_opts['server'], port=utxo_opts['port'], version_byte=utxo_opts['version_byte'],
-                              min_confirmations=min_confirmations )
+                              min_confirmations=min_confirmations,
+                              import_addresses = utxo_opts['import_addresses'])
 
    elif utxo_provider == "blockstack_core":
        return BlockstackCoreUTXOClient( utxo_opts['server'], utxo_opts['port'], min_confirmations=min_confirmations )

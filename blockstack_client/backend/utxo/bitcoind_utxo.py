@@ -42,16 +42,20 @@ def create_bitcoind_service_proxy(
 
 class BitcoindClient(BlockchainClient):
     def __init__(self, rpc_username, rpc_password, use_https=False,
-                 server='127.0.0.1', port=8332, version_byte=0, min_confirmations=None):
+                 server='127.0.0.1', port=8332, version_byte=0, min_confirmations=None,
+                 import_addresses = False):
         self.type = 'bitcoind'
         self.auth = (rpc_username, rpc_password)
         self.bitcoind = create_bitcoind_service_proxy(rpc_username,
             rpc_password, use_https=use_https, server=server, port=port)
         self.version_byte = version_byte
+        self.import_addresses = import_addresses
         self.min_confirmations = min_confirmations
+        print "Initialized UTXO provider bitcoind with importing ({})".format(
+            self.import_addresses)
 
     def get_unspents(self, address):
-        return get_unspents(address, self.bitcoind)
+        return get_unspents(address, self.bitcoind, import_addresses = self.import_addresses)
 
     def broadcast_transaction(self, hex_tx):
         return broadcast_transaction(hex_tx, self.bitcoind)
@@ -71,7 +75,7 @@ def format_unspents(unspents):
     ]
 
 
-def get_unspents(address, blockchain_client):
+def get_unspents(address, blockchain_client, import_addresses = False):
     """ Get the spendable transaction outputs, also known as UTXOs or
         unspent transaction outputs.
 
@@ -94,6 +98,11 @@ def get_unspents(address, blockchain_client):
     max_confirmation = 2000000000  # just a very large number for max
     unspents = bitcoind.listunspent(min_confirmations, max_confirmation,
                                     addresses)
+
+    if import_addresses == True and len(unspents_tmp) == 0:
+        blockchain_client.importaddress(str(address))
+        unspents = bitcoind.listunspent(min_confirmations, max_confirmation,
+                                        addresses)
 
     return format_unspents(unspents)
 
