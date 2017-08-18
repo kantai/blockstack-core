@@ -52,7 +52,8 @@ def scenario( wallets, **kw ):
 
     global datasets
 
-    wallet_keys = testlib.blockstack_client_initialize_wallet( "0123456789abcdef", wallets[2].privkey, wallets[3].privkey, None )
+    wallet_keys = testlib.blockstack_client_initialize_wallet( "0123456789abcdef", wallets[2].privkey,
+                                                               wallets[3].privkey, None )
 
     test_proxy = testlib.TestAPIProxy()
     blockstack_client.set_default_proxy( test_proxy )
@@ -68,7 +69,7 @@ def scenario( wallets, **kw ):
 
     testlib.blockstack_name_preorder( "foo.test", wallets[2].privkey, wallets[3].addr )
     testlib.next_block( **kw )
-    
+
     testlib.blockstack_name_register( "foo.test", wallets[2].privkey, wallets[3].addr )
     testlib.next_block( **kw )
 
@@ -77,18 +78,20 @@ def scenario( wallets, **kw ):
     if 'error' in res:
         res['test'] = 'Failed to initialize foo.test profile'
         print json.dumps(res, indent=4, sort_keys=True)
-        return False 
+        return False
 
     # tell serialization-checker that value_hash can be ignored here
     print "BLOCKSTACK_SERIALIZATION_CHECK_IGNORE value_hash"
     sys.stdout.flush()
-    
+
     testlib.next_block( **kw )
 
     # put immutable (with owner key)
     log.debug("put immutable 1 with owner key")
-    testlib.blockstack_client_set_wallet( "0123456789abcdef", wallet_keys['payment_privkey'], wallet_keys['owner_privkey'], None ) 
-     
+
+    print "setting owner key = {}\n was = {} addr = {}".format(wallet_keys['owner_privkey'], wallets[3].privkey, wallets[3].addr)
+    testlib.blockstack_client_set_wallet( "0123456789abcdef", wallet_keys['payment_privkey'], wallet_keys['owner_privkey'], None )
+
     res = testlib.start_api("0123456789abcdef")
     if 'error' in res:
         print 'failed to start API: {}'.format(res)
@@ -104,13 +107,13 @@ def scenario( wallets, **kw ):
     # tell serialization-checker that value_hash can be ignored here
     print "BLOCKSTACK_SERIALIZATION_CHECK_IGNORE value_hash"
     sys.stdout.flush()
-    
+
     # wait for confirmation
     for i in xrange(0, 12):
         testlib.next_block( **kw )
     print "waiting for confirmation"
     time.sleep(10)
-    
+
     # put immutable (with owner key)
     log.debug("put immutable 2 with owner key")
     testlib.blockstack_cli_put_immutable("foo.test", "hello_world_2_immutable", json.dumps(datasets[1], sort_keys=True), password='0123456789abcdef')
@@ -123,7 +126,7 @@ def scenario( wallets, **kw ):
     # tell serialization-checker that value_hash can be ignored here
     print "BLOCKSTACK_SERIALIZATION_CHECK_IGNORE value_hash"
     sys.stdout.flush()
-    
+
     # wait for confirmation
     for i in xrange(0, 12):
         testlib.next_block( **kw )

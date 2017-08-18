@@ -216,6 +216,11 @@ def make_wallet(password, payment_privkey_info=None, owner_privkey_info=None, da
         'version': SERIES_VERSION,
     }
 
+    if data_privkey_info is None:
+        del decrypted_wallet["data_pubkey"]
+        del decrypted_wallet["data_pubkeys"]
+        del decrypted_wallet["data_privkey"]
+
     if not test_legacy:
         jsonschema.validate(decrypted_wallet, WALLET_SCHEMA_CURRENT)
 
@@ -229,7 +234,7 @@ def make_wallet(password, payment_privkey_info=None, owner_privkey_info=None, da
             jsonschema.validate(encrypted_wallet, ENCRYPTED_WALLET_SCHEMA_CURRENT)
         except ValidationError as ve:
             if test_legacy:
-                # no data key is permitted 
+                # no data key is permitted
                 assert BLOCKSTACK_TEST
                 jsonschema.validate(encrypted_wallet, ENCRYPTED_WALLET_SCHEMA_CURRENT_NODATAKEY)
             else:
