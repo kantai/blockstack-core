@@ -26,6 +26,8 @@ jobs:
       - name: Branch and commit
         run: |
           cd docs.blockstack
+          git config user.email "robots@robots.actions"
+          git config user.name "PR Robot"
           if $(git show-ref --verify --quiet refs/heads/auto/clarity-ref-update); then
             git branch -D auto/clarity-ref-update
           fi
