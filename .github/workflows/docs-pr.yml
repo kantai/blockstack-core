@@ -45,6 +45,7 @@ jobs:
           cd docs.blockstack
           git config user.email "robots@robots.actions"
           git config user.name "PR Robot"
+          git fetch --unshallow
           git checkout -b $ROBOT_BRANCH
           cp ../docs-output/clarityRef.json ./_data/clarityRef.json
           if $(git diff --quiet --exit-code); then
