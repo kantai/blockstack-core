@@ -23,7 +23,7 @@ jobs:
   dist:
     runs-on: ubuntu-latest
     env:
-      ROBOT_BRANCH: ${{ format('auto/clarity-ref-{0}', env.GITHUB_SHA) }}
+      ROBOT_BRANCH: ${{ format('auto/clarity-ref-{0}', github.sha) }}
     steps:
       - uses: actions/checkout@v2
 
