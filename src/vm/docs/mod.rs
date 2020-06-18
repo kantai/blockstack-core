@@ -56,7 +56,7 @@ const BLOCK_HEIGHT: KeywordAPI = KeywordAPI {
     name: "block-height",
     output_type: "uint",
     description: "Returns the current block height of the Stacks blockchain as an int",
-    example: "(> block-height 1000) ;; returns true if the current block-height has passed 1000 blocks."
+    example: "(> block-height 1000) ;; returns true if the current block-height has passed 1000 blocks ."
 };
 
 const CONTRACT_CALLER_KEYWORD: KeywordAPI = KeywordAPI {
