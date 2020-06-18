@@ -24,6 +24,7 @@ jobs:
           path: docs.blockstack
 
       - name: Branch and commit
+        id: push
         run: |
           cd docs.blockstack
           git config user.email "robots@robots.actions"
@@ -35,16 +36,16 @@ jobs:
           cp ../docs-output/clarityRef.json ./_data/clarityRef.json
           if $(git diff --quiet --exit-code); then
             echo "No clarityRef.json changes, stopping"
-            echo "::set-env CONTINUE=0"
+            echo "::set-output name=open_pr::0"
           else
             git remote add kantai https://github.com/kantai/docs.blockstack
             git add _data/clarityRef.json
             git commit -m "auto: update clarityRef.json from stacks-blockchain@${GITHUB_SHA}"
-            git push kantai auto/clarity-ref-update
-            echo "::set-env CONTINUE=1"
+            git push --force kantai auto/clarity-ref-update
+            echo "::set-output name=open_pr::1"
           fi
       - name: Open PR
-        if: env.CONTINUE == '1'
+        if: ${{ steps.push.outputs.open_pr == '1' }}
         uses: actions/github-script@v2
         with:
           github-token: ${{ secrets.DOCS_GITHUB_TOKEN }}
