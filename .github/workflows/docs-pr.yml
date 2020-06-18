@@ -19,7 +19,8 @@ jobs:
       - name: Checkout latest docs
         uses: actions/checkout@v2
         with:
-          repository: kantai/docs.blockstack
+          token: ${{ secrets.DOCS_GITHUB_TOKEN }}
+          repository: blockstack/docs.blockstack
           path: docs.blockstack
 
       - name: Branch and commit
@@ -34,14 +35,16 @@ jobs:
             echo "No clarityRef.json changes, stopping"
             echo "::set-env CONTINUE=0"
           else
+            git remote add kantai https://github.com/kantai/docs.blockstack
             git add _data/clarityRef.json
             git commit -m "auto: update clarityRef.json from stacks-blockchain@${GITHUB_SHA}"
-            git push origin auto/clarity-ref-update
+            git push kantai auto/clarity-ref-update
             echo "::set-env CONTINUE=1"
           fi
       - name: Open PR
-        if: env.CONTINUE == "1"
+        if: env.CONTINUE == '1'
         uses: actions/github-script@v2
+        github-token: ${{ secrets.DOCS_GITHUB_TOKEN }}
         with:
           script: |
             let existingPulls = github.pulls.list({
@@ -54,7 +57,7 @@ jobs:
                  owner: "kantai",
                  repo: "docs.blockstack",
                  title: "Auto: Update API documentation from stacks-blockchain",
-                 head: "auto/clarity-ref-update",
+                 head: "kantai:auto/clarity-ref-update",
                  base: "master",
                  body: "Update API documentation from the latest in `stacks-blockchain`",
                })
