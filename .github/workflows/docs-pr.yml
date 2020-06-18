@@ -1,4 +1,19 @@
+##
+## Github workflow for auto-opening a PR on the docs.blockstack repo
+##  whenever the auto-generated documentation here changes.
+##
+## It does this using a robot account `kantai-robot` to create a
+##  _base_ for the PR, the robot doesn't need any permissions to anyone
+##  else's git repositories.
+
 name: Open Docs PR
+
+env:
+  ROBOT_OWNER: kantai-robot
+  ROBOT_REPO: docs.blockstack
+  TARGET_OWNER: kantai
+  TARGET_REPO: docs.blockstack
+  TARGET_REPOSITORY: kantai/docs.blockstack
 
 on:
   push:
@@ -20,7 +35,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           token: ${{ secrets.DOCS_GITHUB_TOKEN }}
-          repository: blockstack/docs.blockstack
+          repository: ${{ env.TARGET_REPOSITORY }}
           path: docs.blockstack
 
       - name: Branch and commit
@@ -38,10 +53,10 @@ jobs:
             echo "No clarityRef.json changes, stopping"
             echo "::set-output name=open_pr::0"
           else
-            git remote add kantai https://github.com/kantai/docs.blockstack
+            git remote add robot https://github.com/$ROBOT_OWNER/$ROBOT_REPO
             git add _data/clarityRef.json
             git commit -m "auto: update clarityRef.json from stacks-blockchain@${GITHUB_SHA}"
-            git push --force kantai auto/clarity-ref-update
+            git push --force robot auto/clarity-ref-update
             echo "::set-output name=open_pr::1"
           fi
       - name: Open PR
@@ -50,22 +65,25 @@ jobs:
         with:
           github-token: ${{ secrets.DOCS_GITHUB_TOKEN }}
           script: |
+            // get env vars
+            const process = require("process");
+            const robot_owner = process.env.ROBOT_OWNER;
+            const head = `${robot_owner}:auto/clarity-ref-update`;
+            const owner = process.env.TARGET_OWNER;
+            const repo = process.env.TARGET_REPO;
+
+            console.log(`Checking PR with params: head= ${head} owner= ${owner} repo= ${repo}`);
+
             // check if a pull exists
-            const existingPulls = await github.pulls.list({
-              owner: "kantai",
-              repo: "docs.blockstack",
-              head: "kantai:auto/clarity-ref-update"});
+            const existingPulls = await github.pulls.list({ owner, repo, head });
             console.log(existingPulls.data);
             if (existingPulls.data.length == 0) {
                // Open PR if one doesn't exist
-               console.log("2");
+               console.log("PR not found, opening new.");
                let result = await github.pulls.create({
-                 owner: "kantai",
-                 repo: "docs.blockstack",
-                 title: "Auto: Update API documentation from stacks-blockchain",
-                 head: "kantai:auto/clarity-ref-update",
+                 owner, repo, head,
                  base: "master",
+                 title: "Auto: Update API documentation from stacks-blockchain",
                  body: "Update API documentation from the latest in `stacks-blockchain`",
                });
-               console.log(result);
             }
