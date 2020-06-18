@@ -1,0 +1,61 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+
+jobs:      
+  dist:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build docs
+        env:
+          DOCKER_BUILDKIT: 1
+        run: rm -rf docs-output && docker build -o docs-output -f ./.github/actions/docsgen/Dockerfile.docsgen .
+
+      - name: Checkout latest docs
+        uses: actions/checkout@v2
+        with:
+          repository: kantai/docs.blockstack
+          path: docs.blockstack
+
+      - name: Branch and commit
+        run: |
+          cd docs.blockstack
+          if $(git show-ref --verify --quiet refs/heads/auto/clarity-ref-update); then
+            git branch -D auto/clarity-ref-update
+          fi
+          git checkout -b auto/clarity-ref-update
+          cp ../docs-output/clarityRef.json ./_data/clarityRef.json
+          if $(git diff --quiet --exit-code); then
+            echo "No clarityRef.json changes, stopping"
+            echo "::set-env CONTINUE=0"
+          else
+            git add _data/clarityRef.json
+            git commit -m "auto: update clarityRef.json from stacks-blockchain@${GITHUB_SHA}"
+            git push origin auto/clarity-ref-update
+            echo "::set-env CONTINUE=1"
+          fi
+      - name: Open PR
+        if: env.CONTINUE == "1"
+        uses: actions/github-script@v2
+        with:
+          script: |
+            let existingPulls = github.pulls.list({
+              owner: "kantai",
+              repo: "docs.blockstack",
+              head: "kantai:auto/clarity-ref-update"});
+            if existingPulls.length == 0 {
+               // Open PR if one doesn't exist
+               github.pulls.create({
+                 owner: "kantai",
+                 repo: "docs.blockstack",
+                 title: "Auto: Update API documentation from stacks-blockchain",
+                 head: "auto/clarity-ref-update",
+                 base: "master",
+                 body: "Update API documentation from the latest in `stacks-blockchain`",
+               })
+            }

@@ -1,145 +1,276 @@
-# Blockstack Core
+# Stacks 2.0
 
-[![PyPI](https://img.shields.io/pypi/v/blockstack.svg)](https://pypi.python.org/pypi/blockstack/)
-[![Slack](http://slack.blockstack.org/badge.svg)](http://slack.blockstack.org/)
+Reference implementation of the [Blockstack Technical Whitepaper](https://blockstack.org/whitepaper.pdf) in Rust.
 
-Blockstack is a new decentralized internet where you own your data and your apps run locally without remote servers. 
+[![CircleCI](https://circleci.com/gh/blockstack/stacks-blockchain/tree/master.svg?style=svg)](https://circleci.com/gh/blockstack/stacks-blockchain/tree/master)
 
-Blockstack provides decentralized services for naming/DNS, identity, authentication and storage. Developers can use JavaScript libraries to build serverless apps and they don't need to worry about managing infrastructure.
+## Repository
 
-For more info on Blockstack see: http://github.com/blockstack/blockstack
+| Blockstack Topic/Tech    | Where to learn more more                                                          |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| Stacks 2.0               | [master branch](https://github.com/blockstack/stacks-blockchain/tree/master)      |
+| Stacks 1.0               | [legacy branch](https://github.com/blockstack/stacks-blockchain/tree/stacks-1.0)  |
+| Use the package          | [our core docs](https://docs.blockstack.org/core/naming/introduction.html)        |
+| Develop a Blockstack App | [our developer docs](https://docs.blockstack.org/browser/hello-blockstack.html)   |
+| Use a Blockstack App     | [our browser docs](https://docs.blockstack.org/browser/browser-introduction.html) |
+| Blockstack the company   | [our website](https://blockstack.org)                                             |
 
-**Blockstack Core is the reference implementation of Blockstack.** It is responsible for processing blockchain transactions, creating virtualchain state, and building the peer network amongst other things. Blockstack Core provides a RESTful interface for clients and also comes with a command-line-interface (CLI).
+## Design Thesis
 
-## Table of Contents
+Stacks 2.0 is an open-membership replicated state machine produced by the coordination of a non-enumerable set of peers.
 
-- [Quick Start](#quick-start)
-- [Development Status](#development-status)
-- [Blockstack Docs](#blockstack-docs)
-- [Contributing](#contributing)
-- [Community](#community)
+To unpack this definition:
 
-## Quick Start
+- A replicated state machine is two or more copies (“replicas”) of a given set of rules (a “machine”) that, in processing a common input (such as the same sequence of transactions), will arrive at the same configuration (“state”). Bitcoin is a replicated state machine — its state is the set of UTXOs, which each peer has a full copy of, and given a block, all peers will independently calculate the same new UTXO set from the existing one.
+- Open-membership means that any host on the Internet can join the blockchain and independently calculate the same full replica as all other peers.
+- Non-enumerable means that the set of peers that are producing the blocks don’t know about one another — they don’t know their identities, or even how many exist and are online. They are indistinguishable.
 
-### Installing from apt
+## Roadmap
 
-The fastest way to get started with Blockstack is with `apt`.
+- [x] [SIP 001: Burn Election](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-001-burn-election.md)
+- [x] [SIP 002: Clarity, a language for predictable smart contracts](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-002-smart-contract-language.md)
+- [X] [SIP 003: Peer Network](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-003-peer-network.md)
+- [x] [SIP 004: Cryptographic Committment to Materialized Views](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-004-materialized-view.md)
+- [x] [SIP 005: Blocks, Transactions, and Accounts](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-005-blocks-and-transactions.md)
+- [ ] SIP 006: Clarity Execution Cost Assessment (Q2 2020)
+- [ ] SIP 007: Stacking Consensus (Q2 2020)
 
-First, you'll need to add our repositories to apt.
+Stacks improvement proposals (SIPs) are aimed at describing the implementation of the Stacks blockchain, as well as proposing improvements. They should contain concise technical specifications of features or standards and the rationale behind it. SIPs are intended to be the primary medium for proposing new features, for collecting community input on a system-wide issue, and for documenting design decisions.
 
-```
-$ wget -qO - https://raw.githubusercontent.com/blockstack/packaging/master/repo-key.pub | sudo apt-key add -
-$ echo "echo 'deb http://packages.blockstack.com/repositories/ubuntu/ xenial main' > /etc/apt/sources.list.d/blockstack.list" | sudo -E bash -
-$ sudo apt update
-$ sudo apt install blockstack
-```
+See [SIP 000](https://github.com/blockstack/stacks-blockchain/blob/master/sip/sip-000-stacks-improvement-proposal-process.md) for more details.
 
-To install browser, you'll need `nodejs >= 6`, which for Ubuntu, means you'll need to install from (nodejs.org)[https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions]:
-```
-$ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-$ sudo apt install blockstack-browser
-```
+### Testnet versions
 
-#### Support for Integratoin Tests and Regtest Environment
+- [x] **Helium** is a developer local setup, mono-node, assembling SIP 001, SIP 002, SIP 004 and SIP 005. With this version, developers can not only run Stacks 2.0 on their development machines, but also write, execute, and test smart contracts. See the instructions below for more details.
 
-Our integration test suite allows you to easily get a regtest environment up and running with Blockstack, and the above `apt` package includes the suite. However, you'll need to install `bitcoind` and `sqlite3` for the tests to execute properly. For that you'll need to add bitcoin's PPA (or install it otherwise).
+- [ ] **Neon** is the upcoming version of our public testnet, that we're anticipating will ship in Q2 2020. This testnet will ship with SIP 003, and will be an open-membership public network, where participants will be able to validate and participate in mining testnet blocks.
 
-```
-$ sudo apt install software-properties-common
-$ sudo add-apt-repository ppa:bitcoin/bitcoin
-$ sudo apt update
-$ sudo apt install sqlite3 bitcoind
-```
+- [ ] **Mainnet** is the fully functional version, that we're intending to ship in Q3 2020.
 
-### Installing from pip
+## Getting started
 
-You should use `pip2` if you have it instead of `pip`, since Blockstack requires Python 2.
+### Download and build stacks-blockchain
 
-For Debian & Ubuntu:
-```
-$ sudo apt-get update && sudo apt-get install -y python-pip python-dev libssl-dev libffi-dev rng-tools libgmp3-dev
-$ sudo pip2 install pyparsing
-$ sudo pip2 install blockstack --upgrade
-```
-For SUSE and openSUSE
-```
-$ sudo zypper update && zypper install rng-tools python-devel libffi-devel
-$ sudo pip install blockstack --upgrade 
-```
+The first step is to ensure that you have Rust and the support software installed.
 
-### Testing your install
-
-You can test your installation by trying:
-```
-$ blockstack info 
-```
-which should display the last block processed and the latest consensus hash.
-
-After installation, you can (optionally) do a fast-sync that quickly syncs your node with the network:
 ```bash
-$ blockstack-core --debug fast_sync http://fast-sync.blockstack.org/snapshot.bsk
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-And start Blockstack Core to index the blockchain:
+_For building on Windows, follow the rustup installer instructions at https://rustup.rs/_
+
+From there, you can clone this repository:
+
 ```bash
-$ blockstack-core --debug start
-$ tail -f ~/.blockstack-server/blockstack-server.log
+git clone https://github.com/blockstack/stacks-blockchain.git
+
+cd stacks-blockchain
 ```
 
-Next, visit the [basic usage docs](https://blockstack.org/docs) and [extended usage docs](https://blockstack.org/docs) to learn how to register names of your own, as well as transfer them and associate data with them.
+Then build the project:
 
-If you encounter any technical issues in installing or using Blockstack, please [search the open issues](https://github.com/blockstack/blockstack-core/issues) and start a new one if your issue is not covered. 
+```bash
+cargo build
+```
 
-## Development Status
+Run the tests:
 
-**v0.14.2** is the current stable release of Blockstack Core (available on the master branch).<br>
-**v0.14.3** is the next release candidate for Blockstack Core (available on the [v0.14.3 branch](https://github.com/blockstack/blockstack-core/tree/rc-0.14.3)).
+```bash
+cargo test testnet  -- --test-threads=1
+```
 
-Most of the development is happening in the [v0.14.3 branch](https://github.com/blockstack/blockstack-core/tree/rc-0.14.3). Please submit all
-pull requests to that branch.
+### Encode and sign transactions
 
-In the list of [release notes](https://github.com/blockstack/blockstack-core/tree/master/release_notes) you can find what has changed in these versions.
+Let's start by generating a keypair, that will be used for signing the upcoming transactions:
 
-## Blockstack Docs
+```bash
+cargo run --bin blockstack-cli generate-sk --testnet
+
+# Output
+# {
+#  secretKey: "b8d99fd45da58038d630d9855d3ca2466e8e0f89d3894c4724f0efc9ff4b51f001",
+#  publicKey: "02781d2d3a545afdb7f6013a8241b9e400475397516a0d0f76863c6742210539b5",
+#  stacksAddress: "ST2ZRX0K27GW0SP3GJCEMHD95TQGJMKB7G9Y0X1MH"
+# }
+```
+
+We will interact with the following simple contract `kv-store`. In our examples, we will assume this contract is saved to `./kv-store.clar`:
+
+```scheme
+(define-map store ((key (buff 32))) ((value (buff 32))))
+
+(define-public (get-value (key (buff 32)))
+    (match (map-get? store {key: key})
+        entry (ok (get value entry))
+        (err 0)))
+
+(define-public (set-value (key (buff 32)) (value (buff 32)))
+    (begin
+        (map-set store {key: key} {value: value})
+        (ok true)))
+```
+
+We want to publish this contract on chain, then issue some transactions that interact with it by setting some keys and getting some values, so we can observe read and writes.
+
+Our first step is to generate and sign, using your private key, the transaction that will publish the contract `kv-store`.
+To do that, we will use the subcommand:
+
+```bash
+cargo run --bin blockstack-cli publish --help
+```
+
+With the following arguments:
+
+```bash
+cargo run --bin blockstack-cli publish b8d99fd45da58038d630d9855d3ca2466e8e0f89d3894c4724f0efc9ff4b51f001 500 0 kv-store ./kv-store.clar --testnet
+```
+
+The `500` is the transaction fee, denominated in microSTX.  Right now, the
+testnet requires one microSTX per byte minimum, and this transaction should be
+less than 500 bytes.
+
+This command will output the **binary format** of the transaction. In our case, we want to pipe this output and dump it to a file that will be used later in this tutorial.
+
+```bash
+cargo run --bin blockstack-cli publish b8d99fd45da58038d630d9855d3ca2466e8e0f89d3894c4724f0efc9ff4b51f001 500 0 kv-store ./kv-store.clar --testnet | xxd -r -p > tx1.bin
+```
+
+### Run the testnet
+
+You can observe the state machine in action locally by running:
+
+```bash
+cargo testnet start --config=./testnet/stacks-node/Stacks.toml
+```
+
+`Stacks.toml` is a configuration file that you can use for setting genesis balances or configuring Event observers.  You can grant an address an initial account balance by adding the following entries:
+
+```
+[[mstx_balance]]
+address = "ST2VHM28V9E5QCRD6C73215KAPSBKQGPWTEE5CMQT"
+amount = 100000000
+```
+
+The `address` field is the Stacks testnet address, and the `amount` field is the
+number of microSTX to grant to it in the genesis block.  The addresses of the
+private keys used in the tutorial below are already added.
+
+### Publish your contract
+
+Assuming that the testnet is running, we can publish our `kv-store` contract.
+
+In another terminal (or file explorer), you can move the `tx1.bin` generated earlier, to the mempool:
+
+```bash
+curl -X POST -H "Content-Type: application/octet-stream" --data-binary @./tx1.bin http://localhost:20443/v2/transactions
+```
+
+In the terminal window running the testnet, you can observe the state machine's reactions.
+
+### Reading from / Writing to the contract
+
+Now that our contract has been published on chain, let's try to submit some read / write transactions.
+We will start by trying to read the value associated with the key `foo`.
+
+To do that, we will use the subcommand:
+
+```bash
+cargo run --bin blockstack-cli contract-call --help
+```
+
+With the following arguments:
+
+```bash
+cargo run --bin blockstack-cli contract-call b8d99fd45da58038d630d9855d3ca2466e8e0f89d3894c4724f0efc9ff4b51f001 500 1 ST2ZRX0K27GW0SP3GJCEMHD95TQGJMKB7G9Y0X1MH kv-store get-value -e \"foo\" --testnet | xxd -r -p > tx2.bin
+```
+
+`contract-call` generates and signs a contract-call transaction.
+Note: the third argument `1` is a nonce, that must be increased monotonically with each new transaction.
+
+We can submit the transaction by moving it to the mempool path:
+
+```bash
+curl -X POST -H "Content-Type: application/octet-stream" --data-binary @./tx2.bin http://localhost:20443/v2/transactions
+```
+
+Similarly, we can generate a transaction that would be setting the key `foo` to the value `bar`:
+
+```bash
+cargo run --bin blockstack-cli contract-call b8d99fd45da58038d630d9855d3ca2466e8e0f89d3894c4724f0efc9ff4b51f001 500 2 ST2ZRX0K27GW0SP3GJCEMHD95TQGJMKB7G9Y0X1MH kv-store set-value -e \"foo\" -e \"bar\" --testnet | xxd -r -p > tx3.bin
+```
+
+And submit it by moving it to the mempool path:
+
+```bash
+curl -X POST -H "Content-Type: application/octet-stream" --data-binary @./tx3.bin http://localhost:20443/v2/transactions
+```
+
+Finally, we can issue a third transaction, reading the key `foo` again, for ensuring that the previous transaction has successfully updated the state machine:
+
+```bash
+cargo run --bin blockstack-cli contract-call b8d99fd45da58038d630d9855d3ca2466e8e0f89d3894c4724f0efc9ff4b51f001 500 3 ST2ZRX0K27GW0SP3GJCEMHD95TQGJMKB7G9Y0X1MH kv-store get-value -e \"foo\" --testnet | xxd -r -p > tx4.bin
+```
+
+And submit this last transaction by moving it to the mempool path:
+
+```bash
+curl -X POST -H "Content-Type: application/octet-stream" --data-binary @./tx4.bin http://localhost:20443/v2/transactions
+```
+
+Congratulations, you can now [write your own smart contracts with Clarity](https://docs.blockstack.org/core/smart/overview.html).
+
+## Platform support
+
+Officially supported platforms: `Linux 64-bit`, `MacOS 64-bit`, `Windows 64-bit`.
+
+Platforms with second-tier status _(builds are provided but not tested)_: `Linux ARMv7`, `Linux ARM64`.
+
+## Community
+
+Beyond this Github project,
+Blockstack maintains a public [forum](https://forum.blockstack.org) and an
+opened [Discord](https://discordapp.com/invite/9r94Xkj) channel. In addition, the project
+maintains a [mailing list](https://blockstack.org/signup) which sends out
+community announcements.
+
+The greater Blockstack community regularly hosts in-person
+[meetups](https://www.meetup.com/topics/blockstack/). The project's
+[YouTube channel](https://www.youtube.com/channel/UC3J2iHnyt2JtOvtGVf_jpHQ) includes
+videos from some of these meetups, as well as video tutorials to help new
+users get started and help developers wrap their heads around the system's
+design.
+
+For help cross-compiling on memory-constrained devices, please see the community supported documentation here: [Cross Compiling](https://github.com/dantrevino/cross-compiling-stacks-blockchain/blob/master/README.md).
+
+## Further Reading
 
 You can learn more by visiting [the Blockstack Website](https://blockstack.org) and checking out the in-depth articles and documentation:
 
-- [How Blockstack Works](https://blockstack.org/docs/how-blockstack-works)
-- [Blockstack vs. DNS](https://blockstack.org/docs/blockstack-vs-dns)
-- [Blockstack vs. Namecoin](https://blockstack.org/docs/blockstack-vs-namecoin)
-- [Blockstack Namespaces](https://blockstack.org/docs/namespaces)
-- [Blockstack Light Clients](https://blockstack.org/docs/light-clients)
+- [How Blockstack Works (white paper)](https://blockstack.org/docs/how-blockstack-works)
+- [Blockstack General FAQ](https://blockstack.org/faq)
 
-You can also read the Blockstack paper:
+You can also read peer-reviewed Blockstack papers:
 
-- ["Blockstack: A Global Naming and Storage System Secured by Blockchains"](https://blockstack.org/blockstack.pdf), Proc. USENIX Annual Technical Conference (ATC ’16), June 2016
+- ["Blockstack: A Global Naming and Storage System Secured by Blockchains"](https://www.usenix.org/system/files/conference/atc16/atc16_paper-ali.pdf), Proc. USENIX Annual Technical Conference ([ATC '16](https://www.usenix.org/conference/atc16)), June 2016
+- ["Extending Existing Blockchains with Virtualchain"](https://www.zurich.ibm.com/dccl/papers/nelson_dccl.pdf), Distributed Cryptocurrencies and Consensus Ledgers ([DCCL '16](https://www.zurich.ibm.com/dccl/) workshop, at [ACM PODC 2016](https://www.podc.org/podc2016/)), July 2016
 
 If you have high-level questions about Blockstack, try [searching our forum](https://forum.blockstack.org) and start a new question if your question is not answered there.
 
 ## Contributing
 
-We welcome any small or big contributions! Please take a moment to
-[review the guidelines for contributing to open source](https://guides.github.com/activities/contributing-to-open-source/) in order to make the contribution process easy and effective for everyone involved.
+PRs must include test coverage. However, if your PR includes large tests or tests which cannot run in parallel
+(which is the default operation of the `cargo test` command), these tests should be decorated with `#[ignore]`.
+If you add `#[ignore]` tests, you should add your branch to the filters for the `all_tests` job in our circle.yml
+(or if you are working on net code or marf code, your branch should be named such that it matches the existing
+filters there).
 
-**Developers**:  You can try out Blockstack Core in a local sandbox using our [integration test framework](https://github.com/blockstack/blockstack-integration-tests).
+A test should be marked `#[ignore]` if:
 
-You can install the latest release candidate by:
-```bash
-$ git clone https://github.com/blockstack/blockstack-core.git
-$ blockstack-core/images/scripts/debian-release-candidate.sh
-```
-
-## Community
-
-We have an active community of developers and the best place to interact with the community is:
-
-- [Mailing List](http://blockstack.us14.list-manage1.com/subscribe?u=394a2b5cfee9c4b0f7525b009&id=0e5478ae86) (3,000+ members)
-- [Blockstack Forum](http://forum.blockstack.org)
-- [Live chat on Slack](http://chat.blockstack.org/) (2,400+ members)
+1. It does not _always_ pass `cargo test` in a vanilla environment (i.e., it does not need to run with `--test-threads 1`).
+2. Or, it runs for over a minute via a normal `cargo test` execution (the `cargo test` command will warn if this is not the case).
 
 ## Copyright and License
 
-The code and documentation copyright are attributed to blockstack.org for the year of 2017.
+The code and documentation copyright are attributed to blockstack.org for the year of 2020.
 
-This code is released under
-[the GPL v3 license](http://www.gnu.org/licenses/quick-guide-gplv3.en.html), and the docs are released under [the Creative Commons license](http://creativecommons.org/).
+This code is released under [the GPL v3 license](https://www.gnu.org/licenses/quick-guide-gplv3.en.html), and the docs are released under [the Creative Commons license](https://creativecommons.org/).
