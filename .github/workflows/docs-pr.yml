@@ -55,7 +55,7 @@ jobs:
               owner: "kantai",
               repo: "docs.blockstack",
               head: "kantai:auto/clarity-ref-update"});
-            if existingPulls.length == 0 {
+            if (existingPulls.length == 0) {
                // Open PR if one doesn't exist
                await github.pulls.create({
                  owner: "kantai",
