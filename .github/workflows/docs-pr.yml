@@ -5,6 +5,7 @@
 ## It does this using a robot account `kantai-robot` to create a
 ##  _base_ for the PR, the robot doesn't need any permissions to anyone
 ##  else's git repositories.
+##
 
 name: Open Docs PR
 
