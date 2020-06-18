@@ -15,7 +15,6 @@ env:
   TARGET_OWNER: kantai
   TARGET_REPO: docs.blockstack
   TARGET_REPOSITORY: kantai/docs.blockstack
-
 on:
   push:
     branches: [master]
@@ -23,7 +22,8 @@ on:
 jobs:      
   dist:
     runs-on: ubuntu-latest
-
+    env:
+      ROBOT_BRANCH: ${{ format('auto/clarity-ref-{0}', env.GITHUB_SHA }}
     steps:
       - uses: actions/checkout@v2
 
@@ -45,10 +45,7 @@ jobs:
           cd docs.blockstack
           git config user.email "robots@robots.actions"
           git config user.name "PR Robot"
-          if $(git show-ref --verify --quiet refs/heads/auto/clarity-ref-update); then
-            git branch -D auto/clarity-ref-update
-          fi
-          git checkout -b auto/clarity-ref-update
+          git checkout -b $ROBOT_BRANCH
           cp ../docs-output/clarityRef.json ./_data/clarityRef.json
           if $(git diff --quiet --exit-code); then
             echo "No clarityRef.json changes, stopping"
@@ -57,7 +54,7 @@ jobs:
             git remote add robot https://github.com/$ROBOT_OWNER/$ROBOT_REPO
             git add _data/clarityRef.json
             git commit -m "auto: update clarityRef.json from stacks-blockchain@${GITHUB_SHA}"
-            git push --force robot auto/clarity-ref-update
+            git push robot $ROBOT_BRANCH
             echo "::set-output name=open_pr::1"
           fi
       - name: Open PR
@@ -69,22 +66,31 @@ jobs:
             // get env vars
             const process = require("process");
             const robot_owner = process.env.ROBOT_OWNER;
-            const head = `${robot_owner}:auto/clarity-ref-update`;
+            const robot_branch = process.env.ROBOT_BRANCH;
+            const head = `${robot_owner}:${robot_branch}`;
             const owner = process.env.TARGET_OWNER;
             const repo = process.env.TARGET_REPO;
 
             console.log(`Checking PR with params: head= ${head} owner= ${owner} repo= ${repo}`);
 
             // check if a pull exists
-            const existingPulls = await github.pulls.list({ owner, repo, head });
-            console.log(existingPulls.data);
-            if (existingPulls.data.length == 0) {
-               // Open PR if one doesn't exist
-               console.log("PR not found, opening new.");
-               let result = await github.pulls.create({
-                 owner, repo, head,
-                 base: "master",
-                 title: "Auto: Update API documentation from stacks-blockchain",
-                 body: "Update API documentation from the latest in `stacks-blockchain`",
-               });
+            const existingPulls = await github.pulls.list({
+              owner, repo, state: "open" });
+            const myPulls = existingPulls.data.filter( pull => pull.user.login == robot_owner );
+            console.log(myPulls);
+
+            for (myPull of myPulls) {
+              // close any open PRs
+              const pull_number = myPull.number;
+              console.log(`Closing PR: ${ pull_number }`);
+              await github.pulls.update({ owner, repo, pull_number, state: "closed" });
             }
+
+            // Open PR if one doesn't exist
+            console.log("PR not found, opening new.");
+            let result = await github.pulls.create({
+                owner, repo, head,
+                base: "master",
+                title: "Auto: Update API documentation from stacks-blockchain",
+                body: "Update API documentation from the latest in `stacks-blockchain`",
+            });
