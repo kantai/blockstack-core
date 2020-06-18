@@ -6,7 +6,7 @@ COPY . .
 
 RUN apt-get update && apt-get install -y git
 
-RUN cargo build --debug
+RUN cargo build
 
 RUN mkdir /out
 
